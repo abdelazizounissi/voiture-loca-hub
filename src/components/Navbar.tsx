@@ -9,11 +9,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Menu, LogOut, User, Car } from "lucide-react";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/components/ui/use-toast";
 
 const Navbar = () => {
-  const { isMobile } = useMobile();
+  const isMobile = useIsMobile(); // Changed from { isMobile }
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userType, setUserType] = useState<string | null>(null);
