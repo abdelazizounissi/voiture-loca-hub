@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { vehicles } from "@/data/vehicles";
@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   ArrowLeft, 
   Users, 
@@ -18,7 +19,8 @@ import {
   Check, 
   Star, 
   MapPin, 
-  ShieldCheck 
+  ShieldCheck,
+  AlertCircle
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -26,10 +28,27 @@ const VehicleDetail = () => {
   const { id } = useParams<{ id: string }>();
   const vehicle = vehicles.find(v => v.id === id);
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [days, setDays] = useState(1);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [additionalOptions, setAdditionalOptions] = useState({
+    insurance: false,
+    childSeat: false,
+    gps: false,
+    additionalDriver: false
+  });
+  const [discountCode, setDiscountCode] = useState("");
+  const [discount, setDiscount] = useState(0);
+  
+  useEffect(() => {
+    const loggedInStatus = localStorage.getItem("isLoggedIn");
+    if (loggedInStatus === "true") {
+      setIsLoggedIn(true);
+    }
+  }, []);
   
   const handleStartDateChange = (date: Date | undefined) => {
     setStartDate(date);
@@ -52,7 +71,60 @@ const VehicleDetail = () => {
     }
   };
   
+  const handleCheckboxChange = (option: string) => {
+    setAdditionalOptions(prev => ({
+      ...prev,
+      [option]: !prev[option as keyof typeof prev]
+    }));
+  };
+  
+  const applyDiscountCode = () => {
+    if (discountCode.toLowerCase() === "carflow2025") {
+      setDiscount(10);
+      toast({
+        title: "Discount applied",
+        description: "10% discount has been applied to your reservation"
+      });
+    } else {
+      setDiscount(0);
+      toast({
+        title: "Invalid discount code",
+        description: "The discount code you entered is not valid",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const calculateTotalPrice = () => {
+    if (!vehicle) return 0;
+    
+    let basePrice = vehicle.pricePerDay * days;
+    
+    // Add additional options
+    if (additionalOptions.insurance) basePrice += 15 * days;
+    if (additionalOptions.childSeat) basePrice += 5 * days;
+    if (additionalOptions.gps) basePrice += 8 * days;
+    if (additionalOptions.additionalDriver) basePrice += 20 * days;
+    
+    // Apply discount
+    if (discount > 0) {
+      basePrice = basePrice * (1 - discount / 100);
+    }
+    
+    return basePrice;
+  };
+  
   const handleReservation = () => {
+    if (!isLoggedIn) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to complete your reservation",
+        variant: "destructive"
+      });
+      navigate(`/login?returnUrl=${encodeURIComponent(`/vehicle/${id}`)}`);
+      return;
+    }
+    
     if (!startDate || !endDate) {
       toast({
         title: "Please select dates",
@@ -62,13 +134,33 @@ const VehicleDetail = () => {
       return;
     }
     
+    // In a real app, this would send the reservation to a backend
     toast({
-      title: "Reservation initiated",
-      description: "Please log in or create an account to complete your reservation.",
+      title: "Reservation successful!",
+      description: "Your car has been reserved. Check your email for details.",
     });
     
-    // In a real app, we would redirect to login if not logged in
-    // or process the reservation if already logged in
+    // Save reservation to localStorage for demo purposes
+    const reservations = JSON.parse(localStorage.getItem("reservations") || "[]");
+    reservations.push({
+      id: Date.now().toString(),
+      vehicleId: id,
+      vehicleName: `${vehicle?.brand} ${vehicle?.model}`,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      days: days,
+      totalPrice: calculateTotalPrice(),
+      status: "confirmed",
+      additionalOptions,
+      createdAt: new Date().toISOString()
+    });
+    
+    localStorage.setItem("reservations", JSON.stringify(reservations));
+    
+    // Navigate to a confirmation page (could be created in the future)
+    setTimeout(() => {
+      navigate("/vehicles");
+    }, 2000);
   };
   
   if (!vehicle) {
@@ -97,7 +189,7 @@ const VehicleDetail = () => {
         <div className="container mx-auto px-4">
           {/* Back Navigation */}
           <div className="mb-6">
-            <Link to="/vehicles" className="inline-flex items-center text-brand-blue hover:underline">
+            <Link to="/vehicles" className="inline-flex items-center text-green-500 hover:underline">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Vehicles
             </Link>
@@ -168,13 +260,13 @@ const VehicleDetail = () => {
                 </div>
                 
                 <div className="mb-6">
-                  <div className="text-3xl font-bold text-brand-blue">${vehicle.pricePerDay}</div>
+                  <div className="text-3xl font-bold text-green-500">${vehicle.pricePerDay}</div>
                   <div className="text-gray-600">per day</div>
                 </div>
                 
                 <div>
                   <Button 
-                    className="w-full bg-brand-orange hover:bg-orange-500"
+                    className="w-full bg-green-500 hover:bg-green-600 text-white"
                     onClick={() => window.scrollTo({
                       top: document.getElementById('booking-section')?.offsetTop,
                       behavior: 'smooth'
@@ -296,7 +388,7 @@ const VehicleDetail = () => {
                       </div>
                       
                       <div>
-                        <Link to="#" className="text-brand-blue hover:underline">
+                        <Link to="#" className="text-green-500 hover:underline">
                           View all reviews
                         </Link>
                       </div>
@@ -310,6 +402,20 @@ const VehicleDetail = () => {
             <div id="booking-section">
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-xl font-semibold mb-4">Book This Vehicle</h3>
+                
+                {!isLoggedIn && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md flex items-start">
+                    <AlertCircle className="w-5 h-5 text-yellow-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-yellow-700">
+                        You need to be logged in to complete a reservation. 
+                        <Link to={`/login?returnUrl=${encodeURIComponent(`/vehicle/${id}`)}`} className="ml-1 font-medium text-green-500 hover:underline">
+                          Log in now
+                        </Link>
+                      </p>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="mb-4">
                   <label className="block text-sm font-medium mb-1">Pickup Date</label>
@@ -347,23 +453,145 @@ const VehicleDetail = () => {
                   />
                 </div>
                 
+                <div className="mb-4">
+                  <h4 className="font-medium mb-2">Additional Options</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="insurance" 
+                        checked={additionalOptions.insurance}
+                        onCheckedChange={() => handleCheckboxChange('insurance')}
+                      />
+                      <label htmlFor="insurance" className="text-sm flex justify-between w-full">
+                        <span>Full Insurance</span>
+                        <span className="font-medium">$15/day</span>
+                      </label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="childSeat" 
+                        checked={additionalOptions.childSeat}
+                        onCheckedChange={() => handleCheckboxChange('childSeat')}
+                      />
+                      <label htmlFor="childSeat" className="text-sm flex justify-between w-full">
+                        <span>Child Seat</span>
+                        <span className="font-medium">$5/day</span>
+                      </label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="gps" 
+                        checked={additionalOptions.gps}
+                        onCheckedChange={() => handleCheckboxChange('gps')}
+                      />
+                      <label htmlFor="gps" className="text-sm flex justify-between w-full">
+                        <span>GPS Navigation</span>
+                        <span className="font-medium">$8/day</span>
+                      </label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="additionalDriver" 
+                        checked={additionalOptions.additionalDriver}
+                        onCheckedChange={() => handleCheckboxChange('additionalDriver')}
+                      />
+                      <label htmlFor="additionalDriver" className="text-sm flex justify-between w-full">
+                        <span>Additional Driver</span>
+                        <span className="font-medium">$20/day</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1">Discount Code</label>
+                  <div className="flex space-x-2">
+                    <Input 
+                      type="text" 
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value)}
+                      placeholder="Enter code"
+                      className="flex-grow"
+                    />
+                    <Button 
+                      variant="outline" 
+                      className="border-green-500 text-green-500 hover:bg-green-50"
+                      onClick={applyDiscountCode}
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                  {discount > 0 && (
+                    <p className="text-green-500 text-sm mt-1">
+                      {discount}% discount applied!
+                    </p>
+                  )}
+                </div>
+                
                 <Separator className="my-4" />
                 
-                <div className="flex justify-between mb-2">
-                  <span>Price per day:</span>
-                  <span>${vehicle.pricePerDay}</span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span>Number of days:</span>
-                  <span>{days}</span>
-                </div>
-                <div className="flex justify-between font-bold text-lg mb-4">
-                  <span>Total:</span>
-                  <span>${vehicle.pricePerDay * days}</span>
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-sm">
+                    <span>Price per day:</span>
+                    <span>${vehicle.pricePerDay}</span>
+                  </div>
+                  
+                  <div className="flex justify-between text-sm">
+                    <span>Number of days:</span>
+                    <span>{days}</span>
+                  </div>
+                  
+                  {Object.entries(additionalOptions).map(([key, value]) => {
+                    if (!value) return null;
+                    
+                    let price = 0;
+                    let label = "";
+                    
+                    switch(key) {
+                      case 'insurance':
+                        price = 15;
+                        label = "Full Insurance";
+                        break;
+                      case 'childSeat':
+                        price = 5;
+                        label = "Child Seat";
+                        break;
+                      case 'gps':
+                        price = 8;
+                        label = "GPS Navigation";
+                        break;
+                      case 'additionalDriver':
+                        price = 20;
+                        label = "Additional Driver";
+                        break;
+                    }
+                    
+                    return (
+                      <div key={key} className="flex justify-between text-sm">
+                        <span>{label}:</span>
+                        <span>${price * days}</span>
+                      </div>
+                    );
+                  })}
+                  
+                  {discount > 0 && (
+                    <div className="flex justify-between text-sm text-green-500">
+                      <span>Discount:</span>
+                      <span>-{discount}%</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                    <span>Total:</span>
+                    <span>${calculateTotalPrice().toFixed(2)}</span>
+                  </div>
                 </div>
                 
                 <Button 
-                  className="w-full bg-brand-orange hover:bg-orange-500"
+                  className="w-full bg-green-500 hover:bg-green-600 text-white"
                   onClick={handleReservation}
                 >
                   Reserve Now

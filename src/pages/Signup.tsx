@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,14 @@ const Signup = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Redirect if already logged in
+    if (localStorage.getItem("isLoggedIn") === "true") {
+      navigate("/");
+    }
+  }, [navigate]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -48,11 +56,24 @@ const Signup = () => {
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
+      
+      // Store login info in localStorage
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userType", formData.accountType);
+      localStorage.setItem("userName", formData.firstName);
+      localStorage.setItem("userEmail", formData.email);
+      
       toast({
         title: "Account created!",
-        description: "Welcome to VoitureLocaHub. You can now login with your credentials.",
+        description: `Welcome to CarFlow, ${formData.firstName}!`,
       });
-      // In a real app, we would redirect to login page or dashboard
+      
+      // Redirect to appropriate page based on account type
+      if (formData.accountType === "agency") {
+        navigate("/agency-dashboard");
+      } else {
+        navigate("/vehicles");
+      }
     }, 1500);
   };
   
@@ -63,7 +84,7 @@ const Signup = () => {
       <main className="flex-grow flex items-center justify-center bg-gray-50 py-12 px-4">
         <div className="w-full max-w-md">
           <div className="flex justify-center mb-8">
-            <div className="bg-brand-blue p-3 rounded-full">
+            <div className="bg-green-500 p-3 rounded-full">
               <Car className="h-8 w-8 text-white" />
             </div>
           </div>
@@ -71,7 +92,7 @@ const Signup = () => {
           <div className="bg-white shadow-md rounded-lg p-8">
             <div className="text-center mb-6">
               <h1 className="text-2xl font-bold">Create an Account</h1>
-              <p className="text-gray-600">Join VoitureLocaHub today</p>
+              <p className="text-gray-600">Join CarFlow today</p>
             </div>
             
             <form onSubmit={handleSubmit}>
@@ -162,7 +183,7 @@ const Signup = () => {
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-brand-blue hover:bg-brand-blue-light flex items-center justify-center gap-2"
+                  className="w-full bg-green-500 hover:bg-green-600 flex items-center justify-center gap-2"
                   disabled={isLoading}
                 >
                   {isLoading ? "Creating account..." : (
@@ -178,7 +199,7 @@ const Signup = () => {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{" "}
-                <Link to="/login" className="text-brand-blue hover:underline font-medium">
+                <Link to="/login" className="text-green-500 hover:underline font-medium">
                   Sign in
                 </Link>
               </p>

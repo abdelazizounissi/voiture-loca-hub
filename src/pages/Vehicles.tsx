@@ -27,12 +27,12 @@ const Vehicles = () => {
     let result = vehicles;
     
     // Filter by type
-    if (filters.type) {
+    if (filters.type && filters.type !== "all_types") {
       result = result.filter(vehicle => vehicle.type === filters.type);
     }
     
     // Filter by transmission
-    if (filters.transmission) {
+    if (filters.transmission && filters.transmission !== "any_transmission") {
       result = result.filter(vehicle => vehicle.transmission === filters.transmission);
     }
     
@@ -76,7 +76,7 @@ const Vehicles = () => {
               <h1 className="text-3xl font-bold">Available Vehicles</h1>
               <Button 
                 variant="outline" 
-                className="flex items-center space-x-2 md:hidden"
+                className="flex items-center space-x-2 md:hidden border-green-500 text-green-500"
                 onClick={() => setShowFilters(!showFilters)}
               >
                 <SlidersHorizontal size={18} />
@@ -159,7 +159,7 @@ const Vehicles = () => {
                     <Button 
                       variant="outline" 
                       onClick={resetFilters}
-                      className="flex items-center space-x-2"
+                      className="flex items-center space-x-2 border-green-500 text-green-500 hover:bg-green-50"
                     >
                       <FilterX size={16} />
                       <span>Reset</span>
@@ -185,7 +185,7 @@ const Vehicles = () => {
             <div className="text-center py-12">
               <h3 className="text-xl font-medium mb-2">No vehicles match your criteria</h3>
               <p className="text-gray-600 mb-4">Try adjusting your filters to find more options</p>
-              <Button onClick={resetFilters}>Clear All Filters</Button>
+              <Button onClick={resetFilters} className="bg-green-500 hover:bg-green-600">Clear All Filters</Button>
             </div>
           )}
         </div>
