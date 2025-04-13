@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -180,13 +179,15 @@ const AgencyDashboard = () => {
               <TabsContent value="vehicles">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-semibold">My Vehicles</h2>
-                  <Button 
-                    className="bg-green-500 hover:bg-green-600"
-                    onClick={() => document.querySelector('button[value="add-vehicle"]')?.click()}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Vehicle
-                  </Button>
+                  <div className="flex space-x-2 items-center">
+                    <Button className="bg-green-500 hover:bg-green-600 text-white" onClick={() => {
+                      const targetElement = document.getElementById('addVehicleForm');
+                      if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth' });
+                    }}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add New Vehicle
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
