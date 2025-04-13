@@ -20,16 +20,31 @@ export interface Vehicle {
 export interface Reservation {
   id: string;
   vehicleId: string;
-  startDate: Date;
-  endDate: Date;
+  vehicleName?: string;
+  startDate: Date | string;
+  endDate: Date | string;
   totalPrice: number;
-  status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled';
+  pricePerDay?: number;
+  status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled' | 'pending' | 'confirmed' | 'completed' | 'cancelled';
   userId: string;
+  userName?: string;
 }
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'Customer' | 'Agency' | 'Admin';
+  phone?: string;
+  address?: string;
+  role: 'Customer' | 'Agency' | 'Admin' | 'customer' | 'agency' | 'admin';
+}
+
+export interface Review {
+  id: string;
+  vehicleId: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  date: Date | string;
 }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -22,27 +21,22 @@ const Vehicles = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
   
-  // Apply filters whenever they change
   useEffect(() => {
     let result = vehicles;
     
-    // Filter by type
     if (filters.type && filters.type !== "all_types") {
       result = result.filter(vehicle => vehicle.type === filters.type);
     }
     
-    // Filter by transmission
     if (filters.transmission && filters.transmission !== "any_transmission") {
       result = result.filter(vehicle => vehicle.transmission === filters.transmission);
     }
     
-    // Filter by price range
     result = result.filter(vehicle => 
       vehicle.pricePerDay >= filters.minPrice && 
       vehicle.pricePerDay <= filters.maxPrice
     );
     
-    // Filter by search term
     if (filters.searchTerm) {
       const term = filters.searchTerm.toLowerCase();
       result = result.filter(vehicle => 
@@ -85,7 +79,6 @@ const Vehicles = () => {
             </div>
             
             <div className="flex flex-col md:flex-row gap-8">
-              {/* Search Bar */}
               <div className="w-full">
                 <Input
                   type="text"
@@ -96,7 +89,6 @@ const Vehicles = () => {
                 />
                 
                 <div className={`md:flex gap-4 ${showFilters ? 'flex' : 'hidden'} md:flex flex-col sm:flex-row`}>
-                  {/* Type Filter */}
                   <div className="flex-1 mb-4 sm:mb-0">
                     <Select 
                       value={filters.type} 
@@ -117,7 +109,6 @@ const Vehicles = () => {
                     </Select>
                   </div>
                   
-                  {/* Transmission Filter */}
                   <div className="flex-1 mb-4 sm:mb-0">
                     <Select 
                       value={filters.transmission} 
@@ -134,10 +125,9 @@ const Vehicles = () => {
                     </Select>
                   </div>
                   
-                  {/* Price Range Filter */}
                   <div className="flex-1">
                     <div className="mb-2">
-                      <span className="text-sm font-medium">Price Range: ${filters.minPrice} - ${filters.maxPrice}</span>
+                      <span className="text-sm font-medium">Price Range: {filters.minPrice} - {filters.maxPrice} TND</span>
                     </div>
                     <Slider
                       defaultValue={[filters.minPrice, filters.maxPrice]}
@@ -154,7 +144,6 @@ const Vehicles = () => {
                     />
                   </div>
                   
-                  {/* Reset Filters */}
                   <div className="flex items-end">
                     <Button 
                       variant="outline" 
@@ -170,7 +159,6 @@ const Vehicles = () => {
             </div>
           </div>
           
-          {/* Results */}
           <div className="mb-6">
             <p className="text-gray-600">{filteredVehicles.length} vehicles found</p>
           </div>

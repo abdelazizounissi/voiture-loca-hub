@@ -1,4 +1,3 @@
-
 import { Vehicle } from "../types/Vehicle";
 
 export const vehicles: Vehicle[] = [
@@ -11,8 +10,8 @@ export const vehicles: Vehicle[] = [
     seats: 5,
     transmission: "Automatic",
     fuel: "Gasoline",
-    pricePerDay: 45,
-    image: "https://images.unsplash.com/photo-1664741454371-fc7d4dec146b?q=80&w=2070&auto=format&fit=crop",
+    pricePerDay: 140,
+    image: "https://images.unsplash.com/photo-1590510757517-96288d342b65?q=80&w=2070&auto=format&fit=crop",
     available: true,
     description: "The Toyota Corolla offers excellent fuel efficiency and reliable performance for your daily commute or vacation travel.",
     features: ["Air Conditioning", "Bluetooth", "Cruise Control", "Backup Camera", "USB Port"],

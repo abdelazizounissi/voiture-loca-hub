@@ -1,179 +1,226 @@
 
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, User, Car, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Menu, LogOut, User, Car } from "lucide-react";
+import { useMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/components/ui/use-toast";
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isMobile } = useMobile();
+  const [isOpen, setIsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userType, setUserType] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Check login status from localStorage
     const loggedInStatus = localStorage.getItem("isLoggedIn");
     const storedUserType = localStorage.getItem("userType");
     const storedUserName = localStorage.getItem("userName");
     
-    if (loggedInStatus === "true") {
-      setIsLoggedIn(true);
-      setUserType(storedUserType);
-      setUserName(storedUserName);
-    }
+    setIsLoggedIn(loggedInStatus === "true");
+    setUserType(storedUserType);
+    setUserName(storedUserName);
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
+    localStorage.setItem("isLoggedIn", "false");
     localStorage.removeItem("userType");
-    localStorage.removeItem("userName");
+    
     setIsLoggedIn(false);
     setUserType(null);
-    setUserName(null);
+    
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out",
+    });
+    
     navigate("/");
   };
 
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
+
   return (
-    <header className="sticky top-0 z-50 bg-black shadow-sm">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2">
-          <Car className="h-6 w-6 text-green-500" />
-          <span className="font-bold text-xl text-white">CarFlow</span>
+    <nav className="bg-white shadow-sm py-4">
+      <div className="container mx-auto px-4 flex justify-between items-center">
+        <Link to="/" className="text-2xl font-bold text-green-600">
+          CarFlow
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="text-white hover:text-green-500 font-medium">
-            Home
-          </Link>
-          <Link to="/vehicles" className="text-white hover:text-green-500 font-medium">
-            Vehicles
-          </Link>
-          {userType === "agency" && (
-            <Link to="/agency-dashboard" className="text-white hover:text-green-500 font-medium">
-              Agency Dashboard
-            </Link>
-          )}
-          <Link to="/about" className="text-white hover:text-green-500 font-medium">
-            About Us
-          </Link>
-          <Link to="/contact" className="text-white hover:text-green-500 font-medium">
-            Contact
-          </Link>
-        </nav>
+        {isMobile ? (
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMenu}
+              className="text-gray-700"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
 
-        <div className="hidden md:flex items-center space-x-4">
-          {isLoggedIn ? (
-            <div className="flex items-center space-x-4">
-              <div className="text-white flex items-center">
-                <User size={18} className="mr-2" />
-                <span>{userName || (userType === "agency" ? "Agency" : "User")}</span>
+            {isOpen && (
+              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                <div className="py-1" role="menu">
+                  <Link
+                    to="/"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Home
+                  </Link>
+                  <Link
+                    to="/vehicles"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Vehicles
+                  </Link>
+                  <Link
+                    to="/about"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    About Us
+                  </Link>
+                  <Link
+                    to="/contact"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Contact
+                  </Link>
+                  
+                  {isLoggedIn ? (
+                    <>
+                      {userType === 'agency' && (
+                        <Link
+                          to="/agency-dashboard"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          Agency Dashboard
+                        </Link>
+                      )}
+                      
+                      {userType === 'customer' && (
+                        <Link
+                          to="/client-profile"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsOpen(false)}
+                        >
+                          My Profile
+                        </Link>
+                      )}
+                      
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsOpen(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        to="/login"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Login
+                      </Link>
+                      <Link
+                        to="/signup"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Sign Up
+                      </Link>
+                    </>
+                  )}
+                </div>
               </div>
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-2 border-green-500 text-white hover:bg-green-500"
-                onClick={handleLogout}
-              >
-                <LogOut size={18} />
-                Logout
-              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center space-x-8">
+            <div className="flex space-x-6">
+              <Link to="/" className="text-gray-700 hover:text-gray-900">
+                Home
+              </Link>
+              <Link to="/vehicles" className="text-gray-700 hover:text-gray-900">
+                Vehicles
+              </Link>
+              <Link to="/about" className="text-gray-700 hover:text-gray-900">
+                About Us
+              </Link>
+              <Link to="/contact" className="text-gray-700 hover:text-gray-900">
+                Contact
+              </Link>
             </div>
-          ) : (
-            <>
-              <Link to="/login">
-                <Button variant="outline" className="flex items-center gap-2 border-green-500 text-white hover:bg-green-500">
-                  <User size={18} />
+
+            {isLoggedIn ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center">
+                    <User className="mr-2 h-4 w-4" />
+                    {userName || "User"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {userType === 'agency' && (
+                    <DropdownMenuItem onClick={() => navigate("/agency-dashboard")}>
+                      <Car className="mr-2 h-4 w-4" />
+                      Agency Dashboard
+                    </DropdownMenuItem>
+                  )}
+                  
+                  {userType === 'customer' && (
+                    <DropdownMenuItem onClick={() => navigate("/client-profile")}>
+                      <User className="mr-2 h-4 w-4" />
+                      My Profile
+                    </DropdownMenuItem>
+                  )}
+                  
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex space-x-4">
+                <Button
+                  variant="outline"
+                  className="border-green-500 text-green-500 hover:bg-green-50"
+                  onClick={() => navigate("/login")}
+                >
                   Login
                 </Button>
-              </Link>
-              <Link to="/signup">
-                <Button className="bg-green-500 hover:bg-green-600 text-white">Sign Up</Button>
-              </Link>
-            </>
-          )}
-        </div>
-
-        {/* Mobile Navigation Toggle */}
-        <button className="md:hidden text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-black border-t border-gray-800 py-4 animate-fade-in">
-          <div className="container mx-auto px-4 flex flex-col space-y-4">
-            <Link 
-              to="/" 
-              className="text-white hover:text-green-500 font-medium py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Home
-            </Link>
-            <Link 
-              to="/vehicles" 
-              className="text-white hover:text-green-500 font-medium py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Vehicles
-            </Link>
-            {userType === "agency" && (
-              <Link 
-                to="/agency-dashboard" 
-                className="text-white hover:text-green-500 font-medium py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Agency Dashboard
-              </Link>
+                <Button
+                  className="bg-green-500 hover:bg-green-600"
+                  onClick={() => navigate("/signup")}
+                >
+                  Sign Up
+                </Button>
+              </div>
             )}
-            <Link 
-              to="/about" 
-              className="text-white hover:text-green-500 font-medium py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              About Us
-            </Link>
-            <Link 
-              to="/contact" 
-              className="text-white hover:text-green-500 font-medium py-2"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Contact
-            </Link>
-            <div className="flex flex-col space-y-2 pt-2 border-t border-gray-800">
-              {isLoggedIn ? (
-                <>
-                  <div className="text-white flex items-center py-2">
-                    <User size={18} className="mr-2" />
-                    <span>{userName || (userType === "agency" ? "Agency" : "User")}</span>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-center border-green-500 text-white hover:bg-green-500"
-                    onClick={() => {
-                      handleLogout();
-                      setIsMenuOpen(false);
-                    }}
-                  >
-                    Logout
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                    <Button variant="outline" className="w-full justify-center border-green-500 text-white hover:bg-green-500">Login</Button>
-                  </Link>
-                  <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
-                    <Button className="w-full justify-center bg-green-500 hover:bg-green-600 text-white">Sign Up</Button>
-                  </Link>
-                </>
-              )}
-            </div>
           </div>
-        </div>
-      )}
-    </header>
+        )}
+      </div>
+    </nav>
   );
 };
 

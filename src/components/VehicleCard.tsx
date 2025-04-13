@@ -55,7 +55,7 @@ const VehicleCard = ({ vehicle }: VehicleCardProps) => {
       
       <CardFooter className="border-t pt-4 flex justify-between items-center">
         <div>
-          <span className="text-2xl font-bold text-brand-blue">${vehicle.pricePerDay}</span>
+          <span className="text-2xl font-bold text-brand-blue">{vehicle.pricePerDay} TND</span>
           <span className="text-gray-500 text-sm">/day</span>
         </div>
         <Link 
