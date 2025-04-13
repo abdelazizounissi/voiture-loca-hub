@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -6,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/components/ui/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, CheckSquare } from "lucide-react";
 import { Vehicle } from "@/types/Vehicle";
 import { vehicles } from "@/data/vehicles";
 
@@ -21,6 +23,13 @@ const VehicleDetail = () => {
     from: undefined,
     to: undefined,
   });
+  const [extras, setExtras] = useState({
+    insurance: false,
+    childSeat: false,
+    gps: false,
+    additionalDriver: false,
+  });
+  const [extrasCost, setExtrasCost] = useState(0);
   
   useEffect(() => {
     const foundVehicle = vehicles.find((v) => v.id === id);
@@ -36,15 +45,46 @@ const VehicleDetail = () => {
     }
   }, [id, navigate, toast]);
 
+  // Calculate extras cost whenever extras selection changes
+  useEffect(() => {
+    let cost = 0;
+    if (extras.insurance) cost += 25;
+    if (extras.childSeat) cost += 15;
+    if (extras.gps) cost += 10;
+    if (extras.additionalDriver) cost += 30;
+    setExtrasCost(cost);
+  }, [extras]);
+
+  const handleExtraChange = (extra: keyof typeof extras) => {
+    setExtras(prev => ({
+      ...prev,
+      [extra]: !prev[extra]
+    }));
+  };
+
 const handleReservation = () => {
-  // Check if user is logged in
-  if (localStorage.getItem("isLoggedIn") !== "true") {
+  // Check if user is logged in and has complete profile
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  const userPhone = localStorage.getItem("userPhone");
+  const userAddress = localStorage.getItem("userAddress");
+  
+  if (!isLoggedIn) {
     toast({
       title: "Login required",
       description: "Please log in to make a reservation",
       variant: "destructive"
     });
     navigate("/login");
+    return;
+  }
+  
+  if (!userPhone || !userAddress) {
+    toast({
+      title: "Complete profile required",
+      description: "Please update your profile with phone and address before making a reservation",
+      variant: "destructive"
+    });
+    navigate("/client-profile");
     return;
   }
   
@@ -63,13 +103,15 @@ const handleReservation = () => {
   const diffTime = Math.abs(to.getTime() - from.getTime());
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   
-  // Calculate total price
-  const price = vehicle!.pricePerDay * diffDays;
+  // Calculate total price including extras
+  const rentalPrice = vehicle!.pricePerDay * diffDays;
+  const totalExtras = extrasCost * diffDays;
+  const totalPrice = rentalPrice + totalExtras;
   
   // Generate a reservation ID
   const reservationId = `res-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   
-  // Create reservation object
+  // Create reservation object with complete customer info
   const reservation = {
     id: reservationId,
     vehicleId: vehicle!.id,
@@ -77,10 +119,20 @@ const handleReservation = () => {
     pricePerDay: vehicle!.pricePerDay,
     startDate: from.toISOString(),
     endDate: to.toISOString(),
-    totalPrice: price,
+    rentalDays: diffDays,
+    rentalPrice: rentalPrice,
+    extraOptions: Object.entries(extras)
+      .filter(([_, selected]) => selected)
+      .map(([name, _]) => name),
+    extrasPrice: totalExtras,
+    totalPrice: totalPrice,
     status: "pending",
     userId: localStorage.getItem("userId") || "user-1",
-    userName: localStorage.getItem("userName") || "User"
+    userName: localStorage.getItem("userName") || "User",
+    userLastName: localStorage.getItem("userLastName") || "",
+    userEmail: localStorage.getItem("userEmail") || "",
+    userPhone: localStorage.getItem("userPhone") || "",
+    userAddress: localStorage.getItem("userAddress") || ""
   };
   
   // In a real app, we would send this to a backend
@@ -121,6 +173,23 @@ const handleReservation = () => {
     );
   }
   
+  // Calculate rental price if dates are selected
+  const calculateRentalPrice = () => {
+    if (!dateRange.from || !dateRange.to) return 0;
+    
+    const from = dateRange.from;
+    const to = dateRange.to;
+    const diffTime = Math.abs(to.getTime() - from.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return vehicle.pricePerDay * diffDays;
+  };
+  
+  const rentalPrice = calculateRentalPrice();
+  const extrasTotal = dateRange.from && dateRange.to 
+    ? extrasCost * Math.ceil(Math.abs(dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -145,8 +214,8 @@ const handleReservation = () => {
               <p className="text-gray-600 mb-4">{vehicle.location}</p>
               
               <div className="text-3xl font-bold text-green-600 mb-2">
-  {vehicle.pricePerDay} TND <span className="text-sm text-gray-500 font-normal">/ day</span>
-</div>
+                {vehicle.pricePerDay} TND <span className="text-sm text-gray-500 font-normal">/ day</span>
+              </div>
               
               <p className="text-gray-700 mb-6">{vehicle.description}</p>
               
@@ -185,8 +254,8 @@ const handleReservation = () => {
               </p>
               
               {/* Date Range Picker */}
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">Select Dates</h2>
+              <div className="mb-6 mt-6 border-t border-gray-200 pt-6">
+                <h2 className="text-xl font-semibold mb-4">Select Rental Period</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -256,9 +325,111 @@ const handleReservation = () => {
                 </div>
               </div>
               
+              {/* Add Extra Options */}
+              <div className="mb-6 border-t border-gray-200 pt-6">
+                <h2 className="text-xl font-semibold mb-4">Extra Options</h2>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="insurance" 
+                      checked={extras.insurance}
+                      onCheckedChange={() => handleExtraChange('insurance')}
+                    />
+                    <label htmlFor="insurance" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex justify-between w-full">
+                      <span>Full Insurance Coverage</span>
+                      <span className="font-semibold">25 TND/day</span>
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="childSeat" 
+                      checked={extras.childSeat}
+                      onCheckedChange={() => handleExtraChange('childSeat')}
+                    />
+                    <label htmlFor="childSeat" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex justify-between w-full">
+                      <span>Child Seat</span>
+                      <span className="font-semibold">15 TND/day</span>
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="gps" 
+                      checked={extras.gps}
+                      onCheckedChange={() => handleExtraChange('gps')}
+                    />
+                    <label htmlFor="gps" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex justify-between w-full">
+                      <span>GPS Navigation</span>
+                      <span className="font-semibold">10 TND/day</span>
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="additionalDriver" 
+                      checked={extras.additionalDriver}
+                      onCheckedChange={() => handleExtraChange('additionalDriver')}
+                    />
+                    <label htmlFor="additionalDriver" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex justify-between w-full">
+                      <span>Additional Driver</span>
+                      <span className="font-semibold">30 TND/day</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Pricing Summary */}
+              {dateRange.from && dateRange.to && (
+                <div className="mb-6 border-t border-gray-200 pt-6">
+                  <h2 className="text-xl font-semibold mb-4">Pricing Summary</h2>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Vehicle Rental:</span>
+                      <span>{rentalPrice} TND</span>
+                    </div>
+                    {extras.insurance && (
+                      <div className="flex justify-between text-sm">
+                        <span>Full Insurance Coverage:</span>
+                        <span>25 TND x {(rentalPrice / vehicle.pricePerDay).toFixed(0)} days</span>
+                      </div>
+                    )}
+                    {extras.childSeat && (
+                      <div className="flex justify-between text-sm">
+                        <span>Child Seat:</span>
+                        <span>15 TND x {(rentalPrice / vehicle.pricePerDay).toFixed(0)} days</span>
+                      </div>
+                    )}
+                    {extras.gps && (
+                      <div className="flex justify-between text-sm">
+                        <span>GPS Navigation:</span>
+                        <span>10 TND x {(rentalPrice / vehicle.pricePerDay).toFixed(0)} days</span>
+                      </div>
+                    )}
+                    {extras.additionalDriver && (
+                      <div className="flex justify-between text-sm">
+                        <span>Additional Driver:</span>
+                        <span>30 TND x {(rentalPrice / vehicle.pricePerDay).toFixed(0)} days</span>
+                      </div>
+                    )}
+                    {(extras.insurance || extras.childSeat || extras.gps || extras.additionalDriver) && (
+                      <div className="flex justify-between pt-2 border-t border-dashed">
+                        <span>Extras Total:</span>
+                        <span>{extrasTotal} TND</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-bold text-lg pt-2 border-t">
+                      <span>Total Price:</span>
+                      <span>{rentalPrice + extrasTotal} TND</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <Button 
-                className="bg-green-500 hover:bg-green-600 text-white"
+                className="bg-green-500 hover:bg-green-600 text-white w-full"
                 onClick={handleReservation}
+                disabled={!vehicle.available}
               >
                 Rent Now
               </Button>

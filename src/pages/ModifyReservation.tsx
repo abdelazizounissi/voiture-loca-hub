@@ -8,7 +8,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, CheckSquare } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const ModifyReservation = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +20,13 @@ const ModifyReservation = () => {
   const [endDate, setEndDate] = useState<Date | undefined>(new Date());
   const [reservation, setReservation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [extras, setExtras] = useState({
+    insurance: false,
+    childSeat: false,
+    gps: false,
+    additionalDriver: false,
+  });
+  const [extrasCost, setExtrasCost] = useState(0);
   
   useEffect(() => {
     // Check if user is logged in
@@ -62,16 +70,54 @@ const ModifyReservation = () => {
     setReservation(found);
     setStartDate(new Date(found.startDate));
     setEndDate(new Date(found.endDate));
+    
+    // Set extras if they exist in the reservation
+    if (found.extraOptions) {
+      const savedExtras = {
+        insurance: found.extraOptions.includes('insurance'),
+        childSeat: found.extraOptions.includes('childSeat'),
+        gps: found.extraOptions.includes('gps'),
+        additionalDriver: found.extraOptions.includes('additionalDriver')
+      };
+      setExtras(savedExtras);
+    }
+    
     setLoading(false);
   }, [id, navigate, toast]);
   
-  const calculateTotalPrice = () => {
+  // Calculate extras cost whenever extras selection changes
+  useEffect(() => {
+    let cost = 0;
+    if (extras.insurance) cost += 25;
+    if (extras.childSeat) cost += 15;
+    if (extras.gps) cost += 10;
+    if (extras.additionalDriver) cost += 30;
+    setExtrasCost(cost);
+  }, [extras]);
+  
+  const handleExtraChange = (extra: keyof typeof extras) => {
+    setExtras(prev => ({
+      ...prev,
+      [extra]: !prev[extra]
+    }));
+  };
+  
+  const calculateRentalPrice = () => {
     if (!startDate || !endDate || !reservation) return 0;
     
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     return diffDays * reservation.pricePerDay;
+  };
+  
+  const calculateTotalPrice = () => {
+    const rentalPrice = calculateRentalPrice();
+    const diffTime = Math.abs(endDate!.getTime() - startDate!.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const totalExtras = extrasCost * diffDays;
+    
+    return rentalPrice + totalExtras;
   };
   
   const handleUpdateReservation = () => {
@@ -86,7 +132,11 @@ const ModifyReservation = () => {
       return;
     }
     
-    const totalPrice = calculateTotalPrice();
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const rentalPrice = calculateRentalPrice();
+    const totalExtras = extrasCost * diffDays;
+    const totalPrice = rentalPrice + totalExtras;
     
     // Update reservation in localStorage
     const reservations = JSON.parse(localStorage.getItem("reservations") || "[]");
@@ -96,7 +146,13 @@ const ModifyReservation = () => {
           ...res,
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
-          totalPrice
+          rentalDays: diffDays,
+          rentalPrice: rentalPrice,
+          extraOptions: Object.entries(extras)
+            .filter(([_, selected]) => selected)
+            .map(([name, _]) => name),
+          extrasPrice: totalExtras,
+          totalPrice: totalPrice
         };
       }
       return res;
@@ -139,7 +195,8 @@ const ModifyReservation = () => {
             
             <div className="mb-6">
               <h2 className="text-xl font-semibold mb-2">Vehicle: {reservation.vehicleName}</h2>
-              <p className="text-gray-600">Modify your reservation dates below:</p>
+              <p className="text-gray-600 mb-2">Booking ID: {reservation.id}</p>
+              <p className="text-gray-600">Modify your reservation details below:</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -192,10 +249,101 @@ const ModifyReservation = () => {
               </div>
             </div>
             
+            {/* Extra Options */}
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold mb-4">Extra Options</h2>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="insurance" 
+                    checked={extras.insurance}
+                    onCheckedChange={() => handleExtraChange('insurance')}
+                  />
+                  <label htmlFor="insurance" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex justify-between w-full">
+                    <span>Full Insurance Coverage</span>
+                    <span className="font-semibold">25 TND/day</span>
+                  </label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="childSeat" 
+                    checked={extras.childSeat}
+                    onCheckedChange={() => handleExtraChange('childSeat')}
+                  />
+                  <label htmlFor="childSeat" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex justify-between w-full">
+                    <span>Child Seat</span>
+                    <span className="font-semibold">15 TND/day</span>
+                  </label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="gps" 
+                    checked={extras.gps}
+                    onCheckedChange={() => handleExtraChange('gps')}
+                  />
+                  <label htmlFor="gps" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex justify-between w-full">
+                    <span>GPS Navigation</span>
+                    <span className="font-semibold">10 TND/day</span>
+                  </label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="additionalDriver" 
+                    checked={extras.additionalDriver}
+                    onCheckedChange={() => handleExtraChange('additionalDriver')}
+                  />
+                  <label htmlFor="additionalDriver" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex justify-between w-full">
+                    <span>Additional Driver</span>
+                    <span className="font-semibold">30 TND/day</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            {/* Pricing Summary */}
             <div className="border-t border-b py-4 mb-6">
-              <div className="flex justify-between">
-                <span className="font-medium">Total Price:</span>
-                <span className="font-bold">{calculateTotalPrice()} TND</span>
+              <h3 className="font-semibold mb-3">Price Summary</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Vehicle Rental:</span>
+                  <span>{calculateRentalPrice()} TND</span>
+                </div>
+                
+                {extras.insurance && (
+                  <div className="flex justify-between text-sm">
+                    <span>Full Insurance Coverage:</span>
+                    <span>25 TND x {Math.ceil(Math.abs(endDate!.getTime() - startDate!.getTime()) / (1000 * 60 * 60 * 24))} days</span>
+                  </div>
+                )}
+                
+                {extras.childSeat && (
+                  <div className="flex justify-between text-sm">
+                    <span>Child Seat:</span>
+                    <span>15 TND x {Math.ceil(Math.abs(endDate!.getTime() - startDate!.getTime()) / (1000 * 60 * 60 * 24))} days</span>
+                  </div>
+                )}
+                
+                {extras.gps && (
+                  <div className="flex justify-between text-sm">
+                    <span>GPS Navigation:</span>
+                    <span>10 TND x {Math.ceil(Math.abs(endDate!.getTime() - startDate!.getTime()) / (1000 * 60 * 60 * 24))} days</span>
+                  </div>
+                )}
+                
+                {extras.additionalDriver && (
+                  <div className="flex justify-between text-sm">
+                    <span>Additional Driver:</span>
+                    <span>30 TND x {Math.ceil(Math.abs(endDate!.getTime() - startDate!.getTime()) / (1000 * 60 * 60 * 24))} days</span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between font-bold mt-2 pt-2 border-t">
+                  <span>Total Price:</span>
+                  <span>{calculateTotalPrice()} TND</span>
+                </div>
               </div>
             </div>
             
