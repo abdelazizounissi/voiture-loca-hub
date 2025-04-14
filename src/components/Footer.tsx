@@ -1,100 +1,104 @@
 
 import { Link } from "react-router-dom";
-import { Car, Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
+import { Car, Mail, Phone, MapPin, Facebook, Twitter, Instagram } from "lucide-react";
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+  
   return (
-    <footer className="bg-gray-900 text-white pt-16 pb-8">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          {/* Company Info */}
+    <footer className="bg-black text-white">
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Brand Section */}
           <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <Car className="h-6 w-6" />
-              <span className="font-bold text-xl">VoitureLocaHub</span>
+            <div className="flex items-center mb-4">
+              <div className="bg-green-500 p-1 rounded-full">
+                <Car className="h-5 w-5 text-white" />
+              </div>
+              <span className="ml-2 text-xl font-semibold">CarFlow</span>
             </div>
-            <p className="text-gray-400 mb-4">
-              The premier car rental platform in Tunisia, connecting customers with reliable vehicle rental options.
+            <p className="text-gray-300 mb-4">
+              Your premium car rental service in Tunisia. We provide high-quality vehicles for your perfect journey.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-white transition-colors">
                 <Facebook size={20} />
               </a>
               <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Instagram size={20} />
+                <Twitter size={20} />
               </a>
               <a href="#" className="text-gray-400 hover:text-white transition-colors">
-                <Twitter size={20} />
+                <Instagram size={20} />
               </a>
             </div>
           </div>
           
           {/* Quick Links */}
           <div>
-            <h3 className="font-bold text-lg mb-4">Quick Links</h3>
+            <h3 className="text-lg font-medium mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/" className="text-gray-400 hover:text-white transition-colors">Home</Link>
+                <Link to="/" className="text-gray-300 hover:text-green-500 transition-colors">Home</Link>
               </li>
               <li>
-                <Link to="/vehicles" className="text-gray-400 hover:text-white transition-colors">Vehicles</Link>
+                <Link to="/vehicles" className="text-gray-300 hover:text-green-500 transition-colors">Vehicles</Link>
               </li>
               <li>
-                <Link to="/about" className="text-gray-400 hover:text-white transition-colors">About Us</Link>
+                <Link to="/about" className="text-gray-300 hover:text-green-500 transition-colors">About Us</Link>
               </li>
               <li>
-                <Link to="/contact" className="text-gray-400 hover:text-white transition-colors">Contact Us</Link>
+                <Link to="/contact" className="text-gray-300 hover:text-green-500 transition-colors">Contact</Link>
               </li>
               <li>
-                <Link to="/terms" className="text-gray-400 hover:text-white transition-colors">Terms & Conditions</Link>
+                <Link to="/terms" className="text-gray-300 hover:text-green-500 transition-colors">Terms & Conditions</Link>
               </li>
             </ul>
           </div>
           
           {/* Vehicle Categories */}
           <div>
-            <h3 className="font-bold text-lg mb-4">Vehicle Categories</h3>
+            <h3 className="text-lg font-medium mb-4">Vehicle Categories</h3>
             <ul className="space-y-2">
               <li>
-                <Link to="/vehicles?type=sedan" className="text-gray-400 hover:text-white transition-colors">Sedans</Link>
+                <Link to="/vehicles?type=SUV" className="text-gray-300 hover:text-green-500 transition-colors">SUVs</Link>
               </li>
               <li>
-                <Link to="/vehicles?type=suv" className="text-gray-400 hover:text-white transition-colors">SUVs</Link>
+                <Link to="/vehicles?type=Sedan" className="text-gray-300 hover:text-green-500 transition-colors">Sedans</Link>
               </li>
               <li>
-                <Link to="/vehicles?type=hatchback" className="text-gray-400 hover:text-white transition-colors">Hatchbacks</Link>
+                <Link to="/vehicles?type=Convertible" className="text-gray-300 hover:text-green-500 transition-colors">Convertibles</Link>
               </li>
               <li>
-                <Link to="/vehicles?type=convertible" className="text-gray-400 hover:text-white transition-colors">Convertibles</Link>
+                <Link to="/vehicles?type=Sports" className="text-gray-300 hover:text-green-500 transition-colors">Sports Cars</Link>
               </li>
               <li>
-                <Link to="/vehicles?type=luxury" className="text-gray-400 hover:text-white transition-colors">Luxury Cars</Link>
+                <Link to="/vehicles?type=Minivan" className="text-gray-300 hover:text-green-500 transition-colors">Minivans</Link>
               </li>
             </ul>
           </div>
           
-          {/* Contact Information */}
+          {/* Contact Info */}
           <div>
-            <h3 className="font-bold text-lg mb-4">Contact Us</h3>
-            <ul className="space-y-4">
+            <h3 className="text-lg font-medium mb-4">Contact Us</h3>
+            <ul className="space-y-3">
               <li className="flex items-start">
-                <MapPin className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                <span className="text-gray-400">123 Rue de Carthage, Tunis, Tunisia</span>
+                <MapPin className="h-5 w-5 mr-2 text-green-500 flex-shrink-0 mt-0.5" />
+                <span className="text-gray-300">123 Avenue Habib Bourguiba, Tunis, Tunisia</span>
               </li>
               <li className="flex items-center">
-                <Phone className="h-5 w-5 text-gray-400 mr-2" />
-                <span className="text-gray-400">+216 71 234 567</span>
+                <Phone className="h-5 w-5 mr-2 text-green-500" />
+                <span className="text-gray-300">+216 71 234 567</span>
               </li>
               <li className="flex items-center">
-                <Mail className="h-5 w-5 text-gray-400 mr-2" />
-                <span className="text-gray-400">contact@voiturelochub.com</span>
+                <Mail className="h-5 w-5 mr-2 text-green-500" />
+                <span className="text-gray-300">info@carflow.tn</span>
               </li>
             </ul>
           </div>
         </div>
         
-        <div className="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
-          <p>&copy; {new Date().getFullYear()} VoitureLocaHub. All rights reserved.</p>
+        <div className="border-t border-gray-800 mt-8 pt-6 text-center text-gray-400">
+          <p>&copy; {currentYear} CarFlow. All rights reserved.</p>
         </div>
       </div>
     </footer>

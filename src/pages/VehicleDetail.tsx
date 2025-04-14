@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import VehicleReviews from "@/components/VehicleReviews";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -74,7 +75,8 @@ const handleReservation = () => {
       description: "Please log in to make a reservation",
       variant: "destructive"
     });
-    navigate("/login");
+    // Navigate to login and pass the current URL as the return URL
+    navigate(`/login?returnUrl=${encodeURIComponent(window.location.pathname)}`);
     return;
   }
   
@@ -434,6 +436,11 @@ const handleReservation = () => {
                 Rent Now
               </Button>
             </div>
+          </div>
+          
+          {/* Reviews Section */}
+          <div className="mt-16">
+            <VehicleReviews vehicleId={vehicle.id} />
           </div>
         </div>
       </main>

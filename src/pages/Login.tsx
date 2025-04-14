@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Car, LogIn } from "lucide-react";
+import { agencies } from "@/data/vehicles";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -15,6 +16,16 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the return URL from location state or query params
+  const getReturnUrl = () => {
+    if (location.state && location.state.from) {
+      return location.state.from;
+    }
+    const params = new URLSearchParams(location.search);
+    return params.get("returnUrl") || "/";
+  };
   
   useEffect(() => {
     // Redirect if already logged in
@@ -38,8 +49,12 @@ const Login = () => {
       return;
     }
     
-    // For demo purposes, let's simulate different user types
-    const isAgency = email.includes("agency");
+    // Check if it's an agency email
+    const agency = agencies.find(a => a.email.toLowerCase() === email.toLowerCase());
+    const isAgency = !!agency;
+    
+    // Create a userId
+    const userId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     const firstName = email.split("@")[0];
     
     // Simulate API call
@@ -49,17 +64,26 @@ const Login = () => {
       // Store login info in localStorage
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("userType", isAgency ? "agency" : "customer");
-      localStorage.setItem("userName", firstName);
+      localStorage.setItem("userId", isAgency ? agency!.id : userId);
+      localStorage.setItem("userName", isAgency ? agency!.name : firstName);
       localStorage.setItem("userEmail", email);
+      
+      if (isAgency) {
+        localStorage.setItem("userPhone", agency!.phone);
+        localStorage.setItem("userAddress", agency!.address);
+      }
       
       toast({
         title: "Login successful",
-        description: `Welcome back to CarFlow, ${firstName}!`,
+        description: `Welcome back to CarFlow, ${isAgency ? agency!.name : firstName}!`,
       });
       
-      // Redirect to home page or return URL
-      const returnUrl = new URLSearchParams(window.location.search).get("returnUrl");
-      navigate(returnUrl || "/");
+      // Redirect to the appropriate dashboard or return URL
+      if (isAgency) {
+        navigate("/agency-dashboard");
+      } else {
+        navigate(getReturnUrl());
+      }
     }, 1500);
   };
   
